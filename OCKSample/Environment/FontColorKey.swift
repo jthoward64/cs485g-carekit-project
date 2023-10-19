@@ -12,7 +12,7 @@ import SwiftUI
 struct FontColorKey: EnvironmentKey {
     static var defaultValue: UIColor {
         #if os(iOS) || os(macOS)
-        return UIColor { $0.userInterfaceStyle == .light ?  #colorLiteral(red: 0.2588235294, green: 0.2588235294, blue: 0.2588235294, alpha: 1) : #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) }
+        return UIColor { $0.userInterfaceStyle == .light ?  #colorLiteral(red: 0.05882352963, green: 0.180392161, blue: 0.2470588237, alpha: 1) : #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) }
         #else
         return #colorLiteral(red: 0.2588235294, green: 0.2588235294, blue: 0.2588235294, alpha: 1)
         #endif

@@ -26,6 +26,7 @@ struct LoginView: View {
     @ObservedObject var viewModel: LoginViewModel
     @State var usersname = ""
     @State var password = ""
+    @State var email = ""
     @State var firstName: String = ""
     @State var lastName: String = ""
     @State var signupLoginSegmentValue = 0
@@ -74,6 +75,12 @@ struct LoginView: View {
 
                 switch signupLoginSegmentValue {
                 case 1:
+                    TextField("Email", text: $email)
+                        .keyboardType(.emailAddress)
+                        .padding()
+                        .background(.white)
+                        .cornerRadius(20.0)
+                        .shadow(radius: 10.0, x: 20, y: 10)
                     TextField("First Name", text: $firstName)
                         .padding()
                         .background(.white)
@@ -102,6 +109,7 @@ struct LoginView: View {
                         await viewModel.signup(.patient,
                                                username: usersname,
                                                password: password,
+                                               email: email,
                                                firstName: firstName,
                                                lastName: lastName)
                     }

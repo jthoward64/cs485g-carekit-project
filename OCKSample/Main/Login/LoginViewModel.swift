@@ -141,13 +141,16 @@ class LoginViewModel: ObservableObject {
      This will also enforce that the username is not already taken.
      - parameter username: The username the person signing up.
      - parameter password: The password the person signing up.
+     - parameter email: The email of the person signing up.
      - parameter firstName: The first name of the person signing up.
      - parameter lastName: The last name of the person signing up.
     */
     @MainActor
+    // swiftlint:disable:next function_parameter_count
     func signup(_ type: UserType,
                 username: String,
                 password: String,
+                email: String,
                 firstName: String,
                 lastName: String) async {
         do {
@@ -157,6 +160,7 @@ class LoginViewModel: ObservableObject {
             }
             var newUser = User()
             // Set any properties you want saved on the user befor logging in.
+            newUser.email = email.lowercased()
             newUser.username = username.lowercased()
             newUser.password = password
             let user = try await newUser.signup()
