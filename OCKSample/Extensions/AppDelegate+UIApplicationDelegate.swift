@@ -6,9 +6,9 @@
 //  Copyright © 2022 Network Reconnaissance Lab. All rights reserved.
 //
 
-import UIKit
-import ParseCareKit
 import os.log
+import ParseCareKit
+import UIKit
 
 extension AppDelegate: UIApplicationDelegate {
     func application(_ application: UIApplication,

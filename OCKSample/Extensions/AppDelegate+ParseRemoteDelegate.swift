@@ -6,13 +6,12 @@
 //  Copyright © 2022 Network Reconnaissance Lab. All rights reserved.
 //
 
-import UIKit
 import CareKitStore
 import ParseCareKit
+import UIKit
 import WatchConnectivity
 
 extension AppDelegate: ParseRemoteDelegate {
-
     func didRequestSynchronization(_ remote: OCKRemoteSynchronizable) {
         NotificationCenter.default.post(.init(name: Notification.Name(rawValue: Constants.requestSync)))
     }

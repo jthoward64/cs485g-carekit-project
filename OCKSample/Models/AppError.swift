@@ -40,7 +40,9 @@ extension AppError: LocalizedError {
             return NSLocalizedString("OCKSampleError: Could not get remote clock ID.",
                                      comment: "Value not available error")
         case .emptyTaskEvents: return "Task events is empty"
-        case let .noOutcomeValueForEvent(event, index): return "Event has no outcome value at index \(index): \(event)"
+        case .noOutcomeValueForEvent(
+            let event, let index
+        ): return "Event has no outcome value at index \(index): \(event)"
         case .invalidIndexPath(let indexPath): return "Invalid index path \(indexPath)"
         case .cannotMakeOutcomeFor(let event): return "Cannot make outcome for event: \(event)"
         case .parseError(let error): return "\(error)"

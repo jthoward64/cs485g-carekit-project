@@ -101,13 +101,6 @@ class TipView: OCKView, OCKCardable {
         return UIFontMetrics.default.scaledValue(for: 200, compatibleWith: traitCollection)
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            imageHeightConstraint.constant = scaledImageHeight(compatibleWith: traitCollection)
-        }
-    }
-
     override func styleDidChange() {
         super.styleDidChange()
         let cachedStyle = style()

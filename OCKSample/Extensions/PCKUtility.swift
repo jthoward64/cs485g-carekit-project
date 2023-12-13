@@ -11,7 +11,6 @@ import ParseCareKit
 import ParseSwift
 
 extension PCKUtility {
-
     /**
      Check server health.
      - returns: **true** if the server is available. **false** if the server reponds with not healthy.

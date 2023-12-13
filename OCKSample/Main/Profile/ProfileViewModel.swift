@@ -9,11 +9,10 @@
 import CareKit
 import CareKitStore
 import CareKitUtilities
-import SwiftUI
 import os.log
+import SwiftUI
 
 class ProfileViewModel: ObservableObject {
-
     // MARK: Public read/write properties
 
     var firstName = ""
@@ -45,7 +44,6 @@ class ProfileViewModel: ObservableObject {
     // MARK: User intentional behavior
 
     func saveProfile() async throws {
-
         guard var patientToUpdate = patient else {
             throw AppError.errorString("The profile is missing the Patient")
         }

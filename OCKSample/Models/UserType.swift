@@ -9,8 +9,8 @@
 import Foundation
 
 enum UserType: String, Codable {
-    case patient                           = "Patient"
-    case none                              = "None"
+    case patient = "Patient"
+    case none = "None"
 
     // Return all types as an array, make sure to maintain order above
     func allTypesAsArray() -> [String] {

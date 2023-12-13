@@ -6,18 +6,19 @@
 //  Copyright © 2022 Network Reconnaissance Lab. All rights reserved.
 //
 
-import Foundation
 import CareKitStore
+import Foundation
 import ParseSwift
 
 extension OCKPatient {
     /**
-    The Remote Clock UUID for this Patient.
-    */
+     The Remote Clock UUID for this Patient.
+     */
     var remoteClockUUID: UUID? {
         get {
             guard let uuidString = remoteID,
-                let uuid = UUID(uuidString: uuidString) else {
+                  let uuid = UUID(uuidString: uuidString)
+            else {
                 return nil
             }
             return uuid
@@ -28,12 +29,13 @@ extension OCKPatient {
     }
 
     /**
-    The user type of this Patient.
-    */
+     The user type of this Patient.
+     */
     var userType: UserType? {
         get {
             guard let typeString = userInfo?[Constants.userTypeKey],
-                let type = UserType(rawValue: typeString) else {
+                  let type = UserType(rawValue: typeString)
+            else {
                 return nil
             }
             return type

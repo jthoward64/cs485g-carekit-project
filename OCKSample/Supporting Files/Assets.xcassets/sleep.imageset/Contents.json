@@ -1,0 +1,21 @@
+{
+  "images" : [
+    {
+      "filename" : "640px-Man_Sleeping_in_Bed_Cartoon_Vector.svg.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

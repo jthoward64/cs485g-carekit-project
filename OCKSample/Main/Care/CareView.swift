@@ -20,6 +20,7 @@ struct CareView: UIViewControllerRepresentable {
         query.taskIDs = [TaskID.steps]
         return query
     }
+
     @Environment(\.appDelegate) private var appDelegate
     @Environment(\.careStore) private var careStore
     @CareStoreFetchRequest(query: query) private var events
@@ -27,19 +28,21 @@ struct CareView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> some UIViewController {
         let viewController = createViewController()
         let navigationController = UINavigationController(rootViewController: viewController)
-        navigationController.navigationBar.backgroundColor = UIColor { $0.userInterfaceStyle == .light ? #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1): #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1) }
+        navigationController.navigationBar.backgroundColor = UIColor { $0.userInterfaceStyle == .light ? #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) : #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1) }
         return navigationController
     }
 
     func updateUIViewController(_ uiViewController: UIViewControllerType,
                                 context: Context) {
         guard let navigationController = uiViewController as? UINavigationController,
-              let careViewController = navigationController.viewControllers.first as? CareViewController else {
+              let careViewController = navigationController.viewControllers.first as? CareViewController
+        else {
             Logger.feed.error("CareView should have been a UINavigationController")
             return
         }
         guard careViewController.store !== careStore ||
-                appDelegate?.isFirstTimeLogin == true else {
+            appDelegate?.isFirstTimeLogin == true
+        else {
             // No need to replace view
             careViewController.events = events
             return

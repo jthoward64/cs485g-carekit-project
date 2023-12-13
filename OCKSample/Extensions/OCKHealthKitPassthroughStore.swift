@@ -6,13 +6,12 @@
 //  Copyright © 2022 Network Reconnaissance Lab. All rights reserved.
 //
 
-import Foundation
 import CareKitStore
+import Foundation
 import HealthKit
 import os.log
 
 extension OCKHealthKitPassthroughStore {
-
     func addTasksIfNotPresent(_ tasks: [OCKHealthKitTask]) async throws {
         let tasksToAdd = tasks
         let taskIdsToAdd = tasksToAdd.compactMap { $0.id }
@@ -43,7 +42,6 @@ extension OCKHealthKitPassthroughStore {
     }
 
     func populateSampleData() async throws {
-
         let schedule = OCKSchedule.dailyAtTime(
             hour: 8, minutes: 0, start: Date(), end: nil, text: nil,
             duration: .hours(12), targetValues: [OCKOutcomeValue(2000.0, units: "Steps")])
@@ -58,6 +56,7 @@ extension OCKHealthKitPassthroughStore {
                 quantityType: .cumulative,
                 unit: .count()))
         steps.asset = "figure.walk"
+        steps.card = .numericProgress
         try await addTasksIfNotPresent([steps])
     }
 }
