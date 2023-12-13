@@ -107,8 +107,7 @@ class LoginViewModel: ObservableObject {
     @MainActor
     private func savePatientAfterSignUp(_ type: UserType,
                                         firstName: String,
-                                        lastName: String) async throws -> OCKPatient
-    {
+                                        lastName: String) async throws -> OCKPatient {
         let remoteUUID = UUID()
         do {
             try await Utility.setDefaultACL()
@@ -165,8 +164,7 @@ class LoginViewModel: ObservableObject {
                 password: String,
                 email: String,
                 firstName: String,
-                lastName: String) async
-    {
+                lastName: String) async {
         do {
             guard try await PCKUtility.isServerAvailable() else {
                 Logger.login.error("Server health is not \"ok\"")
@@ -212,8 +210,7 @@ class LoginViewModel: ObservableObject {
      */
     @MainActor
     func login(username: String,
-               password: String) async
-    {
+               password: String) async {
         do {
             guard try await PCKUtility.isServerAvailable() else {
                 Logger.login.error("Server health is not \"ok\"")
