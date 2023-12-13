@@ -22,8 +22,8 @@ Add the public link to your YouTube or video posted elsewhere.
 
 To learn more about this application, watch the video below:
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=mib_YioKAQQ
-" target="_blank"><img src="http://img.youtube.com/vi/mib_YioKAQQ/0.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=N0oGzseRXG8
+" target="_blank"><img src="http://img.youtube.com/vi/N0oGzseRXG8/0.jpg" 
 alt="Sample demo video" width="240" height="180" border="10" /></a>
 
 ### Designed for the following users
