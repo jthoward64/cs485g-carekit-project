@@ -8,36 +8,38 @@
 
 import CareKit
 import CareKitStore
+import os.log
 import ParseCareKit
 import ParseSwift
-import os.log
 import WatchConnectivity
 
 class LoginViewModel: ObservableObject {
-
     // MARK: Public read, private write properties
+
     @Published private(set) var isLoggedOut = true {
         willSet {
             /*
-             Publishes a notification to subscribers whenever this value changes.
-             This is what the @Published property wrapper gives you for free
-             everytime you use it to wrap a property.
-            */
+              Publishes a notification to subscribers whenever this value changes.
+              This is what the @Published property wrapper gives you for free
+              everytime you use it to wrap a property.
+             */
             objectWillChange.send()
             if newValue {
                 self.sendUpdatedUserStatusToWatch()
             }
         }
     }
+
     @Published private(set) var loginError: ParseError?
 
     init() {
         Task {
-            await checkStatus()
+            await self.checkStatus()
         }
     }
 
     // MARK: Helpers (private)
+
     @MainActor
     private func checkStatus() async {
         let isLoggedOut = self.isLoggedOut
@@ -74,7 +76,8 @@ class LoginViewModel: ObservableObject {
         if let careKitUser = careKitPatient {
             var user = try await User.current()
             guard let userType = careKitUser.userType,
-                let remoteUUID = careKitUser.remoteClockUUID else {
+                  let remoteUUID = careKitUser.remoteClockUUID
+            else {
                 return
             }
             user.lastTypeSelected = userType.rawValue
@@ -91,7 +94,7 @@ class LoginViewModel: ObservableObject {
         }
 
         // Notify the SwiftUI view that the user is correctly logged in and to transition screens
-        await checkStatus()
+        await self.checkStatus()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NotificationCenter.default.post(.init(name: Notification.Name(rawValue: Constants.requestSync)))
@@ -105,7 +108,8 @@ class LoginViewModel: ObservableObject {
     @MainActor
     private func savePatientAfterSignUp(_ type: UserType,
                                         firstName: String,
-                                        lastName: String) async throws -> OCKPatient {
+                                        lastName: String) async throws -> OCKPatient
+    {
         let remoteUUID = UUID()
         do {
             try await Utility.setDefaultACL()
@@ -124,7 +128,16 @@ class LoginViewModel: ObservableObject {
                                     familyName: lastName)
         newPatient.userType = type
         let savedPatient = try await appDelegate.store.addPatient(newPatient)
-        try await appDelegate.store.populateSampleData()
+
+        // Added code to create a contact for the respective signed up user
+        let newContact = OCKContact(id: remoteUUID.uuidString,
+                                    name: newPatient.name,
+                                    carePlanUUID: nil)
+
+        // This is new contact that has never been saved before
+        _ = try await appDelegate.store.addAnyContact(newContact)
+
+        try await appDelegate.store.populateSampleData(newPatient.uuid)
         try await appDelegate.healthKitStore.populateSampleData()
         appDelegate.parseRemote.automaticallySynchronizes = true
 
@@ -135,16 +148,17 @@ class LoginViewModel: ObservableObject {
     }
 
     // MARK: User intentional behavior
-    /**
-     Signs up the user *asynchronously*.
 
-     This will also enforce that the username is not already taken.
-     - parameter username: The username the person signing up.
-     - parameter password: The password the person signing up.
-     - parameter email: The email of the person signing up.
-     - parameter firstName: The first name of the person signing up.
-     - parameter lastName: The last name of the person signing up.
-    */
+    /**
+      Signs up the user *asynchronously*.
+
+      This will also enforce that the username is not already taken.
+      - parameter username: The username the person signing up.
+      - parameter password: The password the person signing up.
+      - parameter email: The email of the person signing up.
+      - parameter firstName: The first name of the person signing up.
+      - parameter lastName: The last name of the person signing up.
+     */
     @MainActor
     // swiftlint:disable:next function_parameter_count
     func signup(_ type: UserType,
@@ -152,7 +166,8 @@ class LoginViewModel: ObservableObject {
                 password: String,
                 email: String,
                 firstName: String,
-                lastName: String) async {
+                lastName: String) async
+    {
         do {
             guard try await PCKUtility.isServerAvailable() else {
                 Logger.login.error("Server health is not \"ok\"")
@@ -187,15 +202,16 @@ class LoginViewModel: ObservableObject {
     }
 
     /**
-     Logs in the user *asynchronously*.
+      Logs in the user *asynchronously*.
 
-     The user must have already signed up.
-     - parameter username: The username the person logging in.
-     - parameter password: The password the person logging in.
-    */
+      The user must have already signed up.
+      - parameter username: The username the person logging in.
+      - parameter password: The password the person logging in.
+     */
     @MainActor
     func login(username: String,
-               password: String) async {
+               password: String) async
+    {
         do {
             guard try await PCKUtility.isServerAvailable() else {
                 Logger.login.error("Server health is not \"ok\"")
@@ -206,7 +222,7 @@ class LoginViewModel: ObservableObject {
             AppDelegateKey.defaultValue?.isFirstTimeLogin = true
             do {
                 try await Utility.setupRemoteAfterLogin()
-                try await finishCompletingSignIn()
+                try await self.finishCompletingSignIn()
             } catch {
                 Logger.login.error("Error saving the patient after signup: \(error, privacy: .public)")
             }
@@ -223,8 +239,8 @@ class LoginViewModel: ObservableObject {
     }
 
     /**
-     Logs in the user anonymously *asynchronously*.
-    */
+      Logs in the user anonymously *asynchronously*.
+     */
     @MainActor
     func loginAnonymously() async {
         do {
@@ -251,8 +267,8 @@ class LoginViewModel: ObservableObject {
     }
 
     /**
-     Logs out the currently logged in person *asynchronously*.
-    */
+      Logs out the currently logged in person *asynchronously*.
+     */
     @MainActor
     func logout() async {
         // You may not have seen "throws" before, but it's simple,

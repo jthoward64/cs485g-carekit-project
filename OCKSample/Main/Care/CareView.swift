@@ -17,7 +17,7 @@ import UIKit
 struct CareView: UIViewControllerRepresentable {
     private static var query: OCKEventQuery {
         var query = OCKEventQuery(for: Date())
-        query.taskIDs = [TaskID.steps]
+        query.taskIDs = [TaskID.sleepTemp]
         return query
     }
 

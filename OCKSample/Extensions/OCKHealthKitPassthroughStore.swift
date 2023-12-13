@@ -41,22 +41,28 @@ extension OCKHealthKitPassthroughStore {
         }
     }
 
-    func populateSampleData() async throws {
+    /*
+      TODO: You need to tie an OCPatient and CarePlan to these tasks,
+     */
+    func populateSampleData(_ patientUUID: UUID? = nil) async throws {
+        let store = OCKStore(name: Constants.noCareStoreName, type: .inMemory)
+        let insomniaCarePlan = try await store.fetchCarePlan(withID: CarePlanID.insomnia.rawValue)
+
         let schedule = OCKSchedule.dailyAtTime(
-            hour: 8, minutes: 0, start: Date(), end: nil, text: nil,
-            duration: .hours(12), targetValues: [OCKOutcomeValue(2000.0, units: "Steps")])
+            hour: 8, minutes: 0, start: Date(), end: nil, text: nil, targetValues: [OCKOutcomeValue(65, units: "F")])
 
         var steps = OCKHealthKitTask(
-            id: TaskID.steps,
-            title: "Steps",
-            carePlanUUID: nil,
+            id: TaskID.sleepTemp,
+            title: "Sleep Temperature",
+            carePlanUUID: insomniaCarePlan.uuid,
             schedule: schedule,
             healthKitLinkage: OCKHealthKitLinkage(
-                quantityIdentifier: .stepCount,
-                quantityType: .cumulative,
+                quantityIdentifier: .appleSleepingWristTemperature,
+                quantityType: .discrete,
                 unit: .count()))
-        steps.asset = "figure.walk"
-        steps.card = .numericProgress
+        steps.asset = "medical.thermometer"
+        steps.instructions = "Your sleeping temperature should be between 60-67 degrees Fahrenheit."
+        steps.card = .labeledValueTask
         try await addTasksIfNotPresent([steps])
     }
 }

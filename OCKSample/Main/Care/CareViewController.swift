@@ -53,8 +53,7 @@ class CareViewController: OCKDailyPageViewController {
          events: CareStoreFetchedResults<OCKAnyEvent, OCKEventQuery>? = nil,
          computeProgress: @escaping (OCKAnyEvent) -> CareTaskProgress = { event in
              event.computeProgress(by: .checkingOutcomeExists)
-         })
-    {
+         }) {
         super.init(store: store, computeProgress: computeProgress)
         self.events = events
     }
@@ -204,8 +203,7 @@ class CareViewController: OCKDailyPageViewController {
         _ cardView: CareKitCard?,
         _ task: OCKAnyTask,
         _ query: OCKEventQuery,
-        _ date: Date) -> [UIViewController]?
-    {
+        _ date: Date) -> [UIViewController]? {
         switch cardView {
         case .numericProgress:
             guard let event = getStoreFetchRequestEvent(for: task.id) else {
@@ -241,8 +239,7 @@ class CareViewController: OCKDailyPageViewController {
                 legendTitle: task.title ?? "",
                 gradientStartColor: nauseaGradientStart,
                 gradientEndColor: nauseaGradientEnd,
-                markerSize: 10)
-            { event in
+                markerSize: 10) { event in
                 event.computeProgress(by: .summingOutcomeValues)
             }
 
@@ -251,8 +248,7 @@ class CareViewController: OCKDailyPageViewController {
                 legendTitle: TaskID.sleepingPill,
                 gradientStartColor: .systemGray2,
                 gradientEndColor: .systemGray,
-                markerSize: 10)
-            { event in
+                markerSize: 10) { event in
                 event.computeProgress(by: .summingOutcomeValues)
             }
 
@@ -309,6 +305,24 @@ class CareViewController: OCKDailyPageViewController {
 
             return [view.formattedHostingController()]
         }
+    }
+
+    private func taskViewController(for task: OCKAnyTask,
+                                    on date: Date) -> [UIViewController]? {
+        var query = OCKEventQuery(for: Date())
+        query.taskIDs = [task.id]
+
+        let cardView: CareKitCard!
+
+        if let task = task as? OCKTask {
+            cardView = task.card
+        } else if let task = task as? OCKHealthKitTask {
+            cardView = task.card
+        } else {
+            return nil
+        }
+
+        return getCardForTask(cardView, task, query, date)
     }
 
     private func taskViewController(for task: OCKAnyTask,

@@ -109,13 +109,33 @@ extension OCKStore {
         }
     }
 
+    func populateCarePlans(patientUUID: UUID? = nil) async throws {
+        let checkInCarePlan = OCKCarePlan(id: CarePlanID.checkIn.rawValue,
+                                          title: "Check in Care Plan",
+                                          patientUUID: patientUUID)
+        let insomniaCarePlan = OCKCarePlan(id: CarePlanID.insomnia.rawValue,
+                                           title: "Insomnia Care Plan",
+                                           patientUUID: patientUUID)
+        let sleepingInCarePlan = OCKCarePlan(id: CarePlanID.sleepingIn.rawValue,
+                                             title: "Sleeping in Care Plan",
+                                             patientUUID: patientUUID)
+        try await addCarePlansIfNotPresent([checkInCarePlan, insomniaCarePlan, sleepingInCarePlan],
+                                           patientUUID: patientUUID)
+    }
+
     // Adds tasks and contacts into the store
-    func populateSampleData() async throws {
+    func populateSampleData(_ patientUUID: UUID? = nil) async throws {
+        try await populateCarePlans(patientUUID: patientUUID)
+
         let thisMorning = Calendar.current.startOfDay(for: Date())
-        let aFewDaysAgo = Calendar.current.date(byAdding: .day, value: -4, to: thisMorning)!
-        let beforeBreakfast = Calendar.current.date(byAdding: .hour, value: 8, to: aFewDaysAgo)!
-        let afterBreakfast = Calendar.current.date(byAdding: .hour, value: 9, to: aFewDaysAgo)!
-        let afterLunch = Calendar.current.date(byAdding: .hour, value: 14, to: aFewDaysAgo)!
+        guard let aFewDaysAgo = Calendar.current.date(byAdding: .day, value: -4, to: thisMorning),
+              let beforeBreakfast = Calendar.current.date(byAdding: .hour, value: 8, to: aFewDaysAgo),
+              let afterBreakfast = Calendar.current.date(byAdding: .hour, value: 9, to: aFewDaysAgo),
+              let afterLunch = Calendar.current.date(byAdding: .hour, value: 14, to: aFewDaysAgo)
+        else {
+            Logger.ockStore.error("Could not unwrap calendar. Should never hit")
+            throw AppError.couldntBeUnwrapped
+        }
 
         let schedule = OCKSchedule(composing: [
             OCKScheduleElement(start: beforeBreakfast,
@@ -127,13 +147,16 @@ extension OCKStore {
                                interval: DateComponents(day: 2))
         ])
 
-        var doxylamine = OCKTask(id: TaskID.sleepingPill,
-                                 title: "Take sleeping pill",
-                                 carePlanUUID: nil,
-                                 schedule: schedule)
-        doxylamine.instructions = "Take a sleeping tablet when having touble sleeping"
-        doxylamine.asset = "pills.fill"
-        doxylamine.card = .checklist
+        let insomniaCarePlan = try await fetchCarePlan(withID: CarePlanID.insomnia.rawValue)
+        let sleepingInCarePlan = try await fetchCarePlan(withID: CarePlanID.sleepingIn.rawValue)
+
+        var sleepingPills = OCKTask(id: TaskID.sleepingPill,
+                                    title: "Take sleeping pill",
+                                    carePlanUUID: insomniaCarePlan.uuid,
+                                    schedule: schedule)
+        sleepingPills.instructions = "Take a sleeping tablet when having touble sleeping"
+        sleepingPills.asset = "pills.fill"
+        sleepingPills.card = .checklist
 
         let insomniaSchedule = OCKSchedule(composing: [
             OCKScheduleElement(start: beforeBreakfast,
@@ -145,7 +168,7 @@ extension OCKStore {
 
         var cantSleep = OCKTask(id: TaskID.cantSleep,
                                 title: "Track your insomnia",
-                                carePlanUUID: nil,
+                                carePlanUUID: insomniaCarePlan.uuid,
                                 schedule: insomniaSchedule)
         cantSleep.impactsAdherence = false
         cantSleep.instructions = "Tap the button below anytime you have trouble sleeping."
@@ -158,7 +181,7 @@ extension OCKStore {
         let breakfastSchedule = OCKSchedule(composing: [breakfastElement])
         var breakfast = OCKTask(id: TaskID.breakfast,
                                 title: "Have a healthy breakfast",
-                                carePlanUUID: nil,
+                                carePlanUUID: sleepingInCarePlan.uuid,
                                 schedule: breakfastSchedule)
         breakfast.impactsAdherence = true
         breakfast.instructions = "Have a healthy breakfast"
@@ -170,7 +193,7 @@ extension OCKStore {
         let stretchSchedule = OCKSchedule(composing: [getUpElement])
         var getUp = OCKTask(id: TaskID.getUp,
                             title: "Get out and about",
-                            carePlanUUID: nil,
+                            carePlanUUID: sleepingInCarePlan.uuid,
                             schedule: stretchSchedule)
         getUp.impactsAdherence = true
         getUp.asset = "figure.walk"
@@ -178,7 +201,7 @@ extension OCKStore {
             "transition to and from sleep."
         getUp.card = .instructionsTask
 
-        try await addTasksIfNotPresent([cantSleep, doxylamine, breakfast, getUp])
+        try await addTasksIfNotPresent([cantSleep, sleepingPills, breakfast, getUp])
 
         var contact1 = OCKContact(id: "jane",
                                   givenName: "Jane",

@@ -25,18 +25,20 @@ struct User: ParseUser {
     // Custom properties
     var lastTypeSelected: String?
     var userTypeUUIDs: [String: UUID]?
+    var profilePicture: ParseFile?
 }
 
 // MARK: Default Implementation
+
 extension User {
     func merge(with object: Self) throws -> Self {
         var updated = try mergeParse(with: object)
         if updated.shouldRestoreKey(\.lastTypeSelected,
-                                     original: object) {
+                                    original: object) {
             updated.lastTypeSelected = object.lastTypeSelected
         }
         if updated.shouldRestoreKey(\.userTypeUUIDs,
-                                     original: object) {
+                                    original: object) {
             updated.userTypeUUIDs = object.userTypeUUIDs
         }
         return updated

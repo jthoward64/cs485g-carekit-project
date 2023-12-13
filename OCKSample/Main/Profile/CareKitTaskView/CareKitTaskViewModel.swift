@@ -25,10 +25,12 @@ class CareKitTaskViewModel: ObservableObject {
             error = AppError.couldntBeUnwrapped
             return
         }
+        let store = OCKStore(name: Constants.noCareStoreName, type: .inMemory)
+        let checkInCarePlan = try? await store.fetchCarePlan(withID: CarePlanID.checkIn.rawValue)
         let uniqueId = UUID().uuidString // Create a unique id for each task
         var task = OCKTask(id: uniqueId,
                            title: title,
-                           carePlanUUID: nil,
+                           carePlanUUID: checkInCarePlan?.uuid,
                            schedule: .dailyAtTime(hour: 0,
                                                   minutes: 0,
                                                   start: Date(),
@@ -55,10 +57,12 @@ class CareKitTaskViewModel: ObservableObject {
             error = AppError.couldntBeUnwrapped
             return
         }
+        let store = OCKStore(name: Constants.noCareStoreName, type: .inMemory)
+        let checkInCarePlan = try? await store.fetchCarePlan(withID: CarePlanID.checkIn.rawValue)
         let uniqueId = UUID().uuidString // Create a unique id for each task
         var healthKitTask = OCKHealthKitTask(id: uniqueId,
                                              title: title,
-                                             carePlanUUID: nil,
+                                             carePlanUUID: checkInCarePlan?.uuid,
                                              schedule: .dailyAtTime(hour: 0,
                                                                     minutes: 0,
                                                                     start: Date(),

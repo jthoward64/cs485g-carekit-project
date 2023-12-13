@@ -46,6 +46,15 @@
       }
     },
     {
+      "identity" : "researchkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/StanfordBDHG/ResearchKit",
+      "state" : {
+        "revision" : "cf79a15c7d8c436f98937fe93e72e880dd2f73e4",
+        "version" : "2.2.20"
+      }
+    },
+    {
       "identity" : "swift-async-algorithms",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms",

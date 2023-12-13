@@ -9,23 +9,24 @@
 import CareKit
 import CareKitStore
 import CareKitUI
-import SwiftUI
 import os.log
+import SwiftUI
 
 struct CareView: View {
     private static var query: OCKEventQuery {
         var query = OCKEventQuery(for: Date())
-        query.taskIDs = [TaskID.stretch, TaskID.kegels]
+        query.taskIDs = [TaskID.getUp, TaskID.breakfast]
         return query
     }
+
     @CareStoreFetchRequest(query: query) private var events
 
     var body: some View {
         ScrollView {
             ForEach(events) { event in
-                if event.result.task.id == TaskID.kegels {
+                if event.result.task.id == TaskID.breakfast {
                     SimpleTaskView(event: event)
-                } else if event.result.task.id == TaskID.stretch {
+                } else if event.result.task.id == TaskID.getUp {
                     InstructionsTaskView(event: event)
                 }
             }
