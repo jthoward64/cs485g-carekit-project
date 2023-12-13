@@ -12,10 +12,13 @@ enum TaskID {
     static let sleepingPill = "sleeping pills"
     static let cantSleep = "insomnia"
     static let getUp = "get up"
+    static let morningWalk = "morning walk"
     static let breakfast = "eat breakfast"
     static let sleepTemp = "sleep temperature"
+    static let link = "link"
+    static let reflect = "reflect"
 
     static var ordered: [String] {
-        [sleepTemp, sleepingPill, breakfast, getUp, cantSleep]
+        [link, sleepTemp, sleepingPill, morningWalk, breakfast, getUp, cantSleep, reflect]
     }
 }

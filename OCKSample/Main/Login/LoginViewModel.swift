@@ -25,7 +25,7 @@ class LoginViewModel: ObservableObject {
              */
             objectWillChange.send()
             if newValue {
-                self.sendUpdatedUserStatusToWatch()
+                sendUpdatedUserStatusToWatch()
             }
         }
     }
@@ -98,7 +98,6 @@ class LoginViewModel: ObservableObject {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NotificationCenter.default.post(.init(name: Notification.Name(rawValue: Constants.requestSync)))
-            Utility.requestHealthKitPermissions()
         }
 
         // Setup installation to receive push notifications
@@ -191,12 +190,15 @@ class LoginViewModel: ObservableObject {
             }
             switch parseError.code {
             case .usernameTaken:
-                self.loginError = parseError
+                loginError = parseError
 
             default:
-                // swiftlint:disable:next line_length
-                Logger.login.error("*** Error Signing up as user for Parse Server. Are you running parse-hipaa and is the initialization complete? Check http://localhost:1337 in your browser. If you are still having problems check for help here: https://github.com/netreconlab/parse-postgres#getting-started ***")
-                self.loginError = parseError
+                Logger.login
+                    .error(
+                        // swiftlint:disable:next line_length
+                        "*** Error Signing up as user for Parse Server. Are you running parse-hipaa and is the initialization complete? Check http://localhost:1337 in your browser. If you are still having problems check for help here: https://github.com/netreconlab/parse-postgres#getting-started ***"
+                    )
+                loginError = parseError
             }
         }
     }
@@ -227,14 +229,17 @@ class LoginViewModel: ObservableObject {
                 Logger.login.error("Error saving the patient after signup: \(error, privacy: .public)")
             }
         } catch {
-            // swiftlint:disable:next line_length
-            Logger.login.error("*** Error logging into Parse Server. If you are still having problems check for help here: https://github.com/netreconlab/parse-hipaa#getting-started ***")
+            Logger.login
+                .error(
+                    // swiftlint:disable:next line_length
+                    "*** Error logging into Parse Server. If you are still having problems check for help here: https://github.com/netreconlab/parse-hipaa#getting-started ***"
+                )
             Logger.login.error("Error details: \(error)")
             guard let parseError = error as? ParseError else {
                 // Handle unknow error, right now it's silent
                 return
             }
-            self.loginError = parseError // Notify the SwiftUI view that there's an error
+            loginError = parseError // Notify the SwiftUI view that there's an error
         }
     }
 
@@ -256,13 +261,16 @@ class LoginViewModel: ObservableObject {
                                                            lastName: "Login")
             try? await finishCompletingSignIn(patient)
         } catch {
-            // swiftlint:disable:next line_length
-            Logger.login.error("*** Error logging into Parse Server. If you are still having problems check for help here: https://github.com/netreconlab/parse-hipaa#getting-started ***")
+            Logger.login
+                .error(
+                    // swiftlint:disable:next line_length
+                    "*** Error logging into Parse Server. If you are still having problems check for help here: https://github.com/netreconlab/parse-hipaa#getting-started ***"
+                )
             Logger.login.error("Error details: \(String(describing: error))")
             guard let parseError = error as? ParseError else {
                 return
             }
-            self.loginError = parseError
+            loginError = parseError
         }
     }
 
@@ -280,6 +288,6 @@ class LoginViewModel: ObservableObject {
             Logger.login.error("Error logging out: \(error)")
         }
         AppDelegateKey.defaultValue?.resetAppToInitialState()
-        await self.checkStatus()
+        await checkStatus()
     }
 }

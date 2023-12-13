@@ -43,7 +43,7 @@ class CustomContactViewController: OCKListViewController {
     }
 
     @available(*, unavailable)
-    public required init?(coder: NSCoder) {
+    public required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -65,15 +65,17 @@ class CustomContactViewController: OCKListViewController {
         reloadView()
     }
 
-    override func viewDidAppear(_ animated: Bool) {
+    override func viewDidAppear(_: Bool) {
         reloadView()
     }
 
     @objc private func presentContactsListViewController() {
         let contactPicker = CNContactPickerViewController()
+        contactPicker.view.tintColor = view.tintColor
         contactPicker.delegate = self
         contactPicker.predicateForEnablingContact = NSPredicate(
-            format: "phoneNumbers.@count > 0")
+            format: "phoneNumbers.@count > 0"
+        )
         present(contactPicker, animated: true, completion: nil)
     }
 
@@ -103,6 +105,17 @@ class CustomContactViewController: OCKListViewController {
             return
         }
 
+        /*
+         Utility.checkIfOnboardingIsComplete is a type method as it is called on the
+         type `Utility` not an instance of the class.
+         */
+        let isOnboardingComplete = await Utility.checkIfOnboardingIsComplete()
+        if !isOnboardingComplete {
+            Logger.contact.info("Onboarding incomplete, hiding contacts")
+            clearAndKeepSearchBar()
+            appendViewController(ContactOnboardingViewController(), animated: false)
+            return
+        }
         guard let contacts = contacts else {
             Logger.contact.error("No contacts to display")
             return
@@ -134,6 +147,8 @@ class CustomContactViewController: OCKListViewController {
             appendViewController(contactViewController, animated: false)
         }
     }
+
+    func displayOnboardingMessage() {}
 
     func convertDeviceContacts(_ contact: CNContact) -> OCKAnyContact {
         var convertedContact = OCKContact(id: contact.identifier, givenName: contact.givenName,
@@ -194,7 +209,7 @@ extension CustomContactViewController: UISearchBarDelegate {
         displayContacts(filteredContacts)
     }
 
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+    func searchBarCancelButtonClicked(_: UISearchBar) {
         clearAndKeepSearchBar()
         displayContacts(allContacts)
     }
@@ -202,7 +217,7 @@ extension CustomContactViewController: UISearchBarDelegate {
 
 extension CustomContactViewController: CNContactPickerDelegate {
     @MainActor
-    func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+    func contactPicker(_: CNContactPickerViewController, didSelect contact: CNContact) {
         Task {
             guard (try? await User.current()) != nil else {
                 Logger.contact.error("User not logged in")
@@ -224,7 +239,7 @@ extension CustomContactViewController: CNContactPickerDelegate {
     }
 
     @MainActor
-    func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
+    func contactPicker(_: CNContactPickerViewController, didSelect contacts: [CNContact]) {
         Task {
             guard (try? await User.current()) != nil else {
                 Logger.contact.error("User not logged in")

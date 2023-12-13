@@ -41,28 +41,65 @@ extension OCKHealthKitPassthroughStore {
         }
     }
 
-    /*
-      TODO: You need to tie an OCPatient and CarePlan to these tasks,
-     */
     func populateSampleData(_ patientUUID: UUID? = nil) async throws {
-        let store = OCKStore(name: Constants.noCareStoreName, type: .inMemory)
-        let insomniaCarePlan = try await store.fetchCarePlan(withID: CarePlanID.insomnia.rawValue)
+        let everyNight = OCKSchedule.dailyAtTime(
+            // swiftlint:disable:next line_length
+            hour: 20, minutes: 0, start: Date(), end: nil, text: nil, duration: OCKScheduleElement.Duration.hours(10), targetValues: [OCKOutcomeValue(65, units: "F")])
 
-        let schedule = OCKSchedule.dailyAtTime(
-            hour: 8, minutes: 0, start: Date(), end: nil, text: nil, targetValues: [OCKOutcomeValue(65, units: "F")])
+        let walkEveryMorning = OCKSchedule.dailyAtTime(
+            // swiftlint:disable:next line_length
+            hour: 8, minutes: 0, start: Date(), end: nil, text: nil, duration: .hours(2), targetValues: [OCKOutcomeValue(500, units: "steps")])
 
-        var steps = OCKHealthKitTask(
+        let getUpEveryMorning = OCKSchedule.dailyAtTime(
+            // swiftlint:disable:next line_length
+            hour: 8, minutes: 0, start: Date(), end: nil, text: nil, duration: .hours(1), targetValues: [OCKOutcomeValue(30, units: "minutes")])
+
+        /*
+         This is a type method as it is not called on an instance of OCKStore but rather the type itself
+         An instance method would be if it were called on something like `AppDelegateKey.defaultValue?.store`
+         */
+        let carePlans = try await OCKStore.getCarePlanUUIDs()
+
+        var sleepTemp = OCKHealthKitTask(
             id: TaskID.sleepTemp,
             title: "Sleep Temperature",
-            carePlanUUID: insomniaCarePlan.uuid,
-            schedule: schedule,
+
+            carePlanUUID: carePlans[CarePlanID.insomnia],
+            schedule: everyNight,
+            healthKitLinkage: OCKHealthKitLinkage(
+                quantityIdentifier: .appleSleepingWristTemperature,
+                quantityType: .discrete,
+                unit: .degreeFahrenheit()))
+        sleepTemp.asset = "medical.thermometer"
+        sleepTemp.instructions = "Your sleeping temperature should be between 60-67 degrees Fahrenheit."
+        sleepTemp.card = .labeledValueTask
+
+        var morningWalk = OCKHealthKitTask(
+            id: TaskID.morningWalk,
+            title: "Take a Walk",
+            carePlanUUID: carePlans[CarePlanID.sleepingIn],
+            schedule: walkEveryMorning,
             healthKitLinkage: OCKHealthKitLinkage(
                 quantityIdentifier: .appleSleepingWristTemperature,
                 quantityType: .discrete,
                 unit: .count()))
-        steps.asset = "medical.thermometer"
-        steps.instructions = "Your sleeping temperature should be between 60-67 degrees Fahrenheit."
-        steps.card = .labeledValueTask
-        try await addTasksIfNotPresent([steps])
+        morningWalk.asset = "figure.walk"
+        morningWalk.instructions = "Take a short walk to get your blood flowing!"
+        morningWalk.card = .numericProgress
+
+        var getUp = OCKHealthKitTask(
+            id: TaskID.morningWalk,
+            title: "Get out of bed",
+            carePlanUUID: carePlans[CarePlanID.sleepingIn],
+            schedule: getUpEveryMorning,
+            healthKitLinkage: OCKHealthKitLinkage(
+                quantityIdentifier: .appleStandTime,
+                quantityType: .cumulative,
+                unit: .minute()))
+        getUp.asset = "figure"
+        getUp.instructions = "How long were you out of bed this morning?"
+        getUp.card = .labeledValueTask
+
+        try await addTasksIfNotPresent([sleepTemp])
     }
 }

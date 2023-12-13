@@ -35,12 +35,12 @@ struct LoginView: View {
         ScrollView {
             VStack {
                 // Change the title to the name of your application
-                Text("CareKit Sample App")
+                Text("Sleep Assistant")
                     .font(.largeTitle)
                     .foregroundColor(.white)
                     .padding()
                 // Change this image to something that represents your application
-                Image("exercise.jpg")
+                Image("Sleep Assistant-logos")
                     .resizable()
                     .frame(width: 150, height: 150, alignment: .center)
                     .clipShape(Circle())

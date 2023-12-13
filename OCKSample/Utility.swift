@@ -6,11 +6,11 @@
 //  Copyright © 2021 Network Reconnaissance Lab. All rights reserved.
 //
 
-import Foundation
 import CareKit
 import CareKitStore
-import ParseSwift
+import Foundation
 import os.log
+import ParseSwift
 
 class Utility {
     // For classes, we can use "class" or "static" to declare type methods/properties.
@@ -28,8 +28,9 @@ class Utility {
 
     class func getRemoteClockUUID() async throws -> UUID {
         guard let user = try? await User.current(),
-            let lastUserTypeSelected = user.lastTypeSelected,
-            let remoteClockUUID = user.userTypeUUIDs?[lastUserTypeSelected] else {
+              let lastUserTypeSelected = user.lastTypeSelected,
+              let remoteClockUUID = user.userTypeUUIDs?[lastUserTypeSelected]
+        else {
             throw AppError.remoteClockIDNotAvailable
         }
         return remoteClockUUID
@@ -57,7 +58,6 @@ class Utility {
         }
         try await appDelegate.setupRemotes(uuid: remoteUUID)
         appDelegate.parseRemote.automaticallySynchronizes = true
-        return
     }
 
     class func updateInstallationWithDeviceToken(_ deviceToken: Data? = nil) async {
@@ -128,7 +128,6 @@ class Utility {
     class func clearDeviceOnFirstRun(storeName: String? = nil) async {
         // Clear items out of the Keychain on app first run.
         if UserDefaults.standard.object(forKey: Constants.appName) == nil {
-
             if let storeName = storeName {
                 let store = OCKStore(name: storeName, type: .onDisk())
                 do {
@@ -143,15 +142,15 @@ class Utility {
                 let parseStore: OCKStore!
 
                 #if os(watchOS)
-                localStore = OCKStore(name: Constants.watchOSLocalCareStoreName,
-                                      type: .onDisk())
-                parseStore = OCKStore(name: Constants.watchOSParseCareStoreName,
-                                      type: .onDisk())
+                    localStore = OCKStore(name: Constants.watchOSLocalCareStoreName,
+                                          type: .onDisk())
+                    parseStore = OCKStore(name: Constants.watchOSParseCareStoreName,
+                                          type: .onDisk())
                 #else
-                localStore = OCKStore(name: Constants.iOSLocalCareStoreName,
-                                      type: .onDisk())
-                parseStore = OCKStore(name: Constants.iOSParseCareStoreName,
-                                      type: .onDisk())
+                    localStore = OCKStore(name: Constants.iOSLocalCareStoreName,
+                                          type: .onDisk())
+                    parseStore = OCKStore(name: Constants.iOSParseCareStoreName,
+                                          type: .onDisk())
                 #endif
 
                 do {
@@ -177,17 +176,35 @@ class Utility {
     }
 
     #if os(iOS)
-    class func requestHealthKitPermissions() {
-        AppDelegateKey.defaultValue?.healthKitStore.requestHealthKitPermissionsForAllTasksInStore { error in
-            guard let error = error else {
-                DispatchQueue.main.async {
-                    // swiftlint:disable:next line_length
-                    NotificationCenter.default.post(.init(name: Notification.Name(rawValue: Constants.finishedAskingForPermission)))
+        class func requestHealthKitPermissions() {
+            AppDelegateKey.defaultValue?.healthKitStore.requestHealthKitPermissionsForAllTasksInStore { error in
+                guard let error = error else {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default
+                            .post(.init(name: Notification.Name(rawValue: Constants.finishedAskingForPermission)))
+                    }
+                    return
                 }
-                return
+                Logger.utility.error("Error requesting HealthKit permissions: \(error)")
             }
-            Logger.utility.error("Error requesting HealthKit permissions: \(error)")
+        }
+    #endif
+
+    @MainActor
+    class func checkIfOnboardingIsComplete() async -> Bool {
+        var query = OCKOutcomeQuery()
+        query.taskIDs = [Onboard.identifier()]
+
+        guard let store = AppDelegateKey.defaultValue?.store else {
+            Logger.feed.error("CareKit store could not be unwrapped")
+            return false
+        }
+
+        do {
+            let outcomes = try await store.fetchAnyOutcomes(query: query)
+            return !outcomes.isEmpty
+        } catch {
+            return false
         }
     }
-    #endif
 }

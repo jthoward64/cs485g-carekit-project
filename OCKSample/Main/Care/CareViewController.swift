@@ -32,9 +32,12 @@ import CareKit
 import CareKitStore
 import CareKitUI
 import os.log
+import ResearchKit
 import SwiftUI
 import UIKit
 
+// swiftlint:disable type_body_length
+@MainActor
 class CareViewController: OCKDailyPageViewController {
     private var isSyncing = false
     private var isLoading = false
@@ -98,10 +101,11 @@ class CareViewController: OCKDailyPageViewController {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh,
                                                                                  target: self,
-                                                                                 // swiftlint:disable:next line_length
-                                                                                 action: #selector(self.synchronizeWithRemote))
-                        // swiftlint:disable:next line_length
-                        self.navigationItem.rightBarButtonItem?.tintColor = self.navigationItem.leftBarButtonItem?.tintColor
+                                                                                 action: #selector(self
+                                                                                     .synchronizeWithRemote))
+
+                        self.navigationItem.rightBarButtonItem?.tintColor = self.navigationItem.leftBarButtonItem?
+                            .tintColor
                     }
                 }
             default:
@@ -113,7 +117,6 @@ class CareViewController: OCKDailyPageViewController {
         }
     }
 
-    @MainActor
     @objc private func synchronizeWithRemote() {
         guard !isSyncing else {
             return
@@ -133,7 +136,7 @@ class CareViewController: OCKDailyPageViewController {
         }
     }
 
-    @objc private func reloadView(_ notification: Notification? = nil) {
+    @objc private func reloadView(_: Notification? = nil) {
         guard !isLoading else {
             return
         }
@@ -147,31 +150,33 @@ class CareViewController: OCKDailyPageViewController {
      This will be called each time the selected date changes.
      Use this as an opportunity to rebuild the content shown to the user.
      */
-    override func dailyPageViewController(_ dailyPageViewController: OCKDailyPageViewController,
-                                          prepare listViewController: OCKListViewController, for date: Date)
-    {
-        let isCurrentDay = Calendar.current.isDate(date, inSameDayAs: Date())
+    override func dailyPageViewController(_: OCKDailyPageViewController,
+                                          prepare listViewController: OCKListViewController, for date: Date) {
+        Task {
+            guard await Utility.checkIfOnboardingIsComplete() else {
+                let onboardSurvey = Onboard()
+                var query = OCKEventQuery(for: Date())
+                query.taskIDs = [Onboard.identifier()]
+                let onboardCard = OCKSurveyTaskViewController(eventQuery: query,
+                                                              store: self.store,
+                                                              survey: onboardSurvey.createSurvey(),
+                                                              extractOutcome: { _ in [OCKOutcomeValue(Date())] })
+                onboardCard.surveyDelegate = self
 
-        // Only show the tip view on the current date
-        if isCurrentDay {
-            if Calendar.current.isDate(date, inSameDayAs: Date()) {
-                // Add a non-CareKit view into the list
-                let tipTitle = "Why is sleep important?"
-                let tipText = "Sleeping regularly can help you feel less tired, "
-                    + "improve your mood, and help you think more clearly."
-                let tipView = TipView()
-                tipView.headerView.titleLabel.text = tipTitle
-                tipView.headerView.detailLabel.text = tipText
-                tipView.imageView.image = UIImage(named: "sleep")
-                tipView.customStyle = CustomStylerKey.defaultValue
-                listViewController.appendView(tipView, animated: false)
+                listViewController.clear()
+                listViewController.appendViewController(
+                    onboardCard,
+                    animated: false
+                )
+                self.isLoading = false
+                return
             }
-        }
 
-        fetchTasks(on: date) { result in
-            switch result {
-            case .success(let tasks):
-                tasks.compactMap {
+            do {
+                let tasks = try await fetchTasks(on: date)
+                let isCurrentDay = Calendar.current.isDate(date, inSameDayAs: Date())
+                let isTommorow = Calendar.current.isDate(date, inSameDayAs: Date.tomorrow)
+                let taskCards = tasks.compactMap {
                     let cards = self.taskViewController(for: $0,
                                                         on: date)
                     cards?.forEach {
@@ -182,14 +187,34 @@ class CareViewController: OCKDailyPageViewController {
                         $0.view.alpha = !isCurrentDay ? 0.4 : 1.0
                     }
                     return cards
-                }.forEach { (cards: [UIViewController]) in
+                }
+
+                // Only show the tip view on the current date
+                listViewController.clear()
+                if isCurrentDay {
+                    if Calendar.current.isDate(date, inSameDayAs: Date()) {
+                        // Add a non-CareKit view into the list
+                        let tipTitle = "Why is sleep important?"
+                        let tipText = "Sleeping regularly can help you feel less tired, "
+                            + "improve your mood, and help you think more clearly."
+                        let tipView = TipView()
+                        tipView.headerView.titleLabel.text = tipTitle
+                        tipView.headerView.detailLabel.text = tipText
+                        tipView.imageView.image = UIImage(named: "sleep")
+                        tipView.customStyle = CustomStylerKey.defaultValue
+                        listViewController.appendView(tipView, animated: false)
+                    }
+                }
+
+                taskCards.forEach { (cards: [UIViewController]) in
                     cards.forEach {
                         listViewController.appendViewController($0, animated: false)
                     }
                 }
-            case .failure(let error):
+            } catch {
                 Logger.feed.error("Could not fetch tasks: \(error)")
             }
+
             self.isLoading = false
         }
     }
@@ -203,7 +228,8 @@ class CareViewController: OCKDailyPageViewController {
         _ cardView: CareKitCard?,
         _ task: OCKAnyTask,
         _ query: OCKEventQuery,
-        _ date: Date) -> [UIViewController]? {
+        _ date: Date
+    ) -> [UIViewController]? {
         switch cardView {
         case .numericProgress:
             guard let event = getStoreFetchRequestEvent(for: task.id) else {
@@ -239,7 +265,8 @@ class CareViewController: OCKDailyPageViewController {
                 legendTitle: task.title ?? "",
                 gradientStartColor: nauseaGradientStart,
                 gradientEndColor: nauseaGradientEnd,
-                markerSize: 10) { event in
+                markerSize: 10
+            ) { event in
                 event.computeProgress(by: .summingOutcomeValues)
             }
 
@@ -248,7 +275,8 @@ class CareViewController: OCKDailyPageViewController {
                 legendTitle: TaskID.sleepingPill,
                 gradientStartColor: .systemGray2,
                 gradientEndColor: .systemGray,
-                markerSize: 10) { event in
+                markerSize: 10
+            ) { event in
                 event.computeProgress(by: .summingOutcomeValues)
             }
 
@@ -256,7 +284,8 @@ class CareViewController: OCKDailyPageViewController {
                 plotType: .bar,
                 selectedDate: date,
                 configurations: [insomniaDataSeries, sleepingPillDataSeries],
-                store: store)
+                store: store
+            )
 
             insightsCard.typedView.headerView.titleLabel.text = "Insomnia & Sleeping Pill Intake"
             insightsCard.typedView.headerView.detailLabel.text = "This Week"
@@ -284,10 +313,28 @@ class CareViewController: OCKDailyPageViewController {
 
         case .link:
             let linkView = LinkView(title: .init("Sleep Tips"),
-                                    // swiftlint:disable:next line_length
-                                    links: [.website("https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/sleep/art-20048379",
-                                                     title: "Six Tips for Better Sleep")])
+                                    links: [.website(
+                                        // swiftlint:disable:next line_length
+                                        "https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/sleep/art-20048379",
+                                        title: "Six Tips for Better Sleep"
+                                    )])
             return [linkView.formattedHostingController()]
+
+        case .survey:
+            guard let surveyTask = task as? OCKTask else {
+                Logger.feed.error("Can only use a survey for an \"OCKTask\", not \(task.id)")
+                return nil
+            }
+
+            let surveyCard = OCKSurveyTaskViewController(
+                eventQuery: query,
+                store: store,
+                survey: surveyTask.survey.type().createSurvey(),
+                viewSynchronizer: SurveyViewSynchronizer(),
+                extractOutcome: surveyTask.survey.type().extractAnswers
+            )
+            surveyCard.surveyDelegate = self
+            return [surveyCard]
 
         default:
             // Check if a healthKit task
@@ -325,38 +372,14 @@ class CareViewController: OCKDailyPageViewController {
         return getCardForTask(cardView, task, query, date)
     }
 
-    private func taskViewController(for task: OCKAnyTask,
-                                    on date: Date) -> [UIViewController]?
-    {
-        var query = OCKEventQuery(for: Date())
-        query.taskIDs = [task.id]
-
-        let cardView: CareKitCard!
-
-        if let task = task as? OCKTask {
-            cardView = task.card
-        } else if let task = task as? OCKHealthKitTask {
-            cardView = task.card
-        } else {
-            return nil
-        }
-
-        return getCardForTask(cardView, task, query, date)
-    }
-
-    private func fetchTasks(on date: Date,
-                            completion: @escaping (Result<[OCKAnyTask], Error>) -> Void)
-    {
+    private func fetchTasks(on date: Date) async throws -> [OCKAnyTask] {
         var query = OCKTaskQuery(for: date)
         query.excludesTasksWithNoEvents = true
-        store.fetchAnyTasks(query: query, callbackQueue: .main) { result in
-            switch result {
-            case .success(let tasks):
-                completion(.success(tasks))
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
+        let tasks = try await store.fetchAnyTasks(query: query)
+
+        // Remove onboarding tasks from array
+        let filteredTasks = tasks.filter { $0.id != Onboard.identifier() }
+        return filteredTasks
     }
 }
 
@@ -365,5 +388,15 @@ private extension View {
         let viewController = UIHostingController(rootView: self)
         viewController.view.backgroundColor = .clear
         return viewController
+    }
+}
+
+extension CareViewController: OCKSurveyTaskViewControllerDelegate {
+    func surveyTask(viewController _: OCKSurveyTaskViewController,
+                    for _: OCKAnyTask,
+                    didFinish result: Result<ORKTaskViewControllerFinishReason, Error>) {
+        if case let .success(reason) = result, reason == .completed {
+            reload()
+        }
     }
 }
